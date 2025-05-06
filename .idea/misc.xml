@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+    <component name="ExternalStorageConfigurationManager" enabled="true" />
+    <component name="MavenProjectsManager">
+        <option name="originalFiles">
+            <list>
+                <option value="$PROJECT_DIR$/services/seat_service/seat_service/pom.xml" />
+                <option value="$PROJECT_DIR$/services/booking_service/booking_service/pom.xml" />
+                <option value="$PROJECT_DIR$/gateway/eureka_server/pom.xml" />
+                <option value="$PROJECT_DIR$/gateway/api_gateway/pom.xml" />
+                <option value="$PROJECT_DIR$/services/movie_service/movie_service/pom.xml" /> <!-- Giữ dòng này -->
+                <!-- Nếu muốn giữ cả dòng auth_service, bạn thêm dòng dưới đây -->
+                <!-- <option value="$PROJECT_DIR$/services/auth_service/auth_service/pom.xml" /> -->
+            </list>
+        </option>
+    </component>
+    <component name="ProjectRootManager" version="2" languageLevel="JDK_17" default="true" project-jdk-name="17" project-jdk-type="JavaSDK">
+        <output url="file://$PROJECT_DIR$/out" />
+    </component>
+</project>
