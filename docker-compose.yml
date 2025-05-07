@@ -1,44 +1,28 @@
-#version: '3.8'
-#services:
-#  booking-service:
-#    build: ./services/booking_service
-#    ports:
-#      - "5001:5000"
-#
-#  movie-service:
-#    build: ./services/movie_service
-#    ports:
-#      - "5002:5000"
-#
-#  seat-service:
-#    build: ./services/seat_service
-#    ports:
-#      - "5002:5000"
-#
-#  gateway:
-#    build: ./gateway
-#    ports:
-#      - "8080:8000"
-
 version: '3.8'
 
 services:
   # Database
   mysql:
     image: mysql:8.0
-    container_name: mysql
+    container_name: mysql3
     environment:
       MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: booking_db
-      MYSQL_USER: user
-      MYSQL_PASSWORD: password
+#      MYSQL_DATABASE: booking_db
+#      MYSQL_USER: userx
+#      MYSQL_PASSWORD: password
     ports:
-      - "3307:3306"
+      - "3309:3306"
     volumes:
-      - mysql_data:/var/lib/mysql
+      - mysql_data:/var/lib/mysql-3
+      - ./mysql-init:/docker-entrypoint-initdb.d
     command: --default-authentication-plugin=mysql_native_password
     networks:
       - booking-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p$$MYSQL_ROOT_PASSWORD"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   # Redis
   redis:
@@ -51,6 +35,11 @@ services:
     command: redis-server --appendonly yes
     networks:
       - booking-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   # RabbitMQ
   rabbitmq:
@@ -66,6 +55,11 @@ services:
       - rabbitmq_data:/var/lib/rabbitmq
     networks:
       - booking-network
+    healthcheck:
+      test: ["CMD", "rabbitmqctl", "status"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   # Eureka Service Discovery
   eureka-server:
@@ -78,6 +72,12 @@ services:
       - SPRING_PROFILES_ACTIVE=docker
     networks:
       - booking-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8761"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
 
   # API Gateway
   api-gateway:
@@ -90,83 +90,93 @@ services:
       - SPRING_PROFILES_ACTIVE=docker
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
     depends_on:
-      - eureka-server
-    restart: on-failure
+      eureka-server:
+        condition: service_healthy
     networks:
       - booking-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
 
   # Movie Service
   movie-service:
     build:
-      context: ./services/movie_service/movie_service
+      context: ./services/movie_service
     container_name: movie-service
     ports:
       - "8081:8081"
-    environment:
-      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/booking_db?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true
-      - SPRING_DATASOURCE_USERNAME=root
-      - SPRING_DATASOURCE_PASSWORD=root
-      - SPRING_PROFILES_ACTIVE=docker
-      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
     depends_on:
-      - mysql
-      - eureka-server
-    restart: on-failure
+      mysql:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
     networks:
       - booking-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8081"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 150s
 
   # Seat Service
   seat-service:
     build:
-      context: ./services/seat_service/seat_service
+      context: ./services/seat_service
     container_name: seat-service
     ports:
       - "8082:8082"
-    environment:
-      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/booking_db?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true
-      - SPRING_DATASOURCE_USERNAME=root
-      - SPRING_DATASOURCE_PASSWORD=root
-      - SPRING_PROFILES_ACTIVE=docker
-      - SPRING_RABBITMQ_HOST=rabbitmq
-      - SPRING_DATA_REDIS_HOST=redis
-      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
     depends_on:
-      - mysql
-      - rabbitmq
-      - redis
-      - eureka-server
-      - api-gateway
-      - movie-service
-    restart: on-failure
+      mysql:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+#      movie-service:
+#        condition: service_healthy
     networks:
       - booking-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8082"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 270s
 
   # Booking Service
   booking-service:
     build:
-      context: ./services/booking_service/booking_service
+      context: ./services/booking_service
     container_name: booking-service
     ports:
       - "8083:8083"
-    environment:
-      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/booking_db?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true
-      - SPRING_DATASOURCE_USERNAME=root
-      - SPRING_DATASOURCE_PASSWORD=root
-      - SPRING_PROFILES_ACTIVE=docker
-      - SPRING_RABBITMQ_HOST=rabbitmq
-      - SPRING_DATA_REDIS_HOST=redis
-      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
     depends_on:
-      - mysql
-      - rabbitmq
-      - redis
-      - eureka-server
-      - api-gateway
-      - movie-service
-      - seat-service
-    restart: on-failure
+      mysql:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+#      movie-service:
+#        condition: service_healthy
+#      seat-service:
+#        condition: service_healthy
     networks:
       - booking-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8083"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 390s
 
 networks:
   booking-network:

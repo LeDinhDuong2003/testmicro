@@ -1,1 +1,348 @@
-# service-b.yaml
+openapi: 3.0.0
+info:
+  title: Movie Service API
+  description: API cho dịch vụ quản lý phim và lịch chiếu phim
+  version: 1.0.0
+servers:
+  - url: http://localhost:8081
+    description: Local Development Server
+  - url: http://movie-service:8081
+    description: Docker Development Environment
+
+tags:
+  - name: movies
+    description: Quản lý thông tin phim
+  - name: showtimes
+    description: Quản lý lịch chiếu phim
+
+paths:
+  /api/movies:
+    get:
+      summary: Lấy danh sách tất cả phim
+      tags:
+        - movies
+      responses:
+        '200':
+          description: Danh sách phim được trả về thành công
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Movie'
+    post:
+      summary: Tạo phim mới
+      tags:
+        - movies
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MovieRequest'
+      responses:
+        '200':
+          description: Phim được tạo thành công
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Movie'
+        '400':
+          description: Dữ liệu không hợp lệ
+
+  /api/movies/{id}:
+    get:
+      summary: Lấy thông tin chi tiết của một phim
+      tags:
+        - movies
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Thông tin phim được trả về thành công
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MovieDTO'
+        '404':
+          description: Không tìm thấy phim
+    put:
+      summary: Cập nhật thông tin phim
+      tags:
+        - movies
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MovieRequest'
+      responses:
+        '200':
+          description: Phim được cập nhật thành công
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Movie'
+        '404':
+          description: Không tìm thấy phim
+    delete:
+      summary: Xóa phim
+      tags:
+        - movies
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Phim được xóa thành công
+        '404':
+          description: Không tìm thấy phim
+
+  /api/showtimes:
+    get:
+      summary: Lấy danh sách tất cả lịch chiếu
+      tags:
+        - showtimes
+      responses:
+        '200':
+          description: Danh sách lịch chiếu được trả về thành công
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Showtime'
+    post:
+      summary: Tạo lịch chiếu mới
+      tags:
+        - showtimes
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ShowtimeRequest'
+      responses:
+        '200':
+          description: Lịch chiếu được tạo thành công
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Showtime'
+        '400':
+          description: Dữ liệu không hợp lệ
+
+  /api/showtimes/{id}:
+    get:
+      summary: Lấy thông tin chi tiết của một lịch chiếu
+      tags:
+        - showtimes
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Thông tin lịch chiếu được trả về thành công
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShowtimeDTO'
+        '404':
+          description: Không tìm thấy lịch chiếu
+    put:
+      summary: Cập nhật thông tin lịch chiếu
+      tags:
+        - showtimes
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ShowtimeRequest'
+      responses:
+        '200':
+          description: Lịch chiếu được cập nhật thành công
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Showtime'
+        '404':
+          description: Không tìm thấy lịch chiếu
+    delete:
+      summary: Xóa lịch chiếu
+      tags:
+        - showtimes
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Lịch chiếu được xóa thành công
+        '404':
+          description: Không tìm thấy lịch chiếu
+
+  /api/showtimes/movie/{movieId}:
+    get:
+      summary: Lấy danh sách lịch chiếu của một phim
+      tags:
+        - showtimes
+      parameters:
+        - name: movieId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Danh sách lịch chiếu được trả về thành công
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Showtime'
+
+  /api/showtimes/time-range:
+    get:
+      summary: Lấy danh sách lịch chiếu trong khoảng thời gian
+      tags:
+        - showtimes
+      parameters:
+        - name: start
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date-time
+        - name: end
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date-time
+      responses:
+        '200':
+          description: Danh sách lịch chiếu được trả về thành công
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Showtime'
+
+components:
+  schemas:
+    Movie:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        title:
+          type: string
+        description:
+          type: string
+        showtimes:
+          type: array
+          items:
+            $ref: '#/components/schemas/Showtime'
+
+    MovieDTO:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        title:
+          type: string
+        description:
+          type: string
+
+    MovieRequest:
+      type: object
+      required:
+        - title
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+
+    Showtime:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        time:
+          type: string
+          format: date-time
+        theater:
+          type: string
+        movie:
+          $ref: '#/components/schemas/Movie'
+
+    ShowtimeDTO:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        time:
+          type: string
+          format: date-time
+        theater:
+          type: string
+        movieId:
+          type: integer
+          format: int64
+        movieTitle:
+          type: string
+
+    ShowtimeRequest:
+      type: object
+      required:
+        - time
+        - theater
+        - movieId
+      properties:
+        time:
+          type: string
+          format: date-time
+        theater:
+          type: string
+        movieId:
+          type: integer
+          format: int64
