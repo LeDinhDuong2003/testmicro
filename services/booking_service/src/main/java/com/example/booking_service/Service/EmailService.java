@@ -41,7 +41,7 @@ public class EmailService {
             emailData.put("seatNumber", bookingResponse.getSeatNumber());
             emailData.put("movieTitle", bookingResponse.getMovieTitle());
             emailData.put("theater", bookingResponse.getTheater());
-            emailData.put("showtime", bookingResponse.getShowtimeDate().toString());
+//            emailData.put("showtime", bookingResponse.getShowtimeDate().toString());
 
             // Gửi thông tin email đến RabbitMQ
             rabbitTemplate.convertAndSend(EMAIL_EXCHANGE, EMAIL_ROUTING_KEY, emailData);

@@ -14,7 +14,6 @@ services:
       - "3309:3306"
     volumes:
       - mysql_data:/var/lib/mysql-3
-      - ./mysql-init:/docker-entrypoint-initdb.d
     command: --default-authentication-plugin=mysql_native_password
     networks:
       - booking-network
